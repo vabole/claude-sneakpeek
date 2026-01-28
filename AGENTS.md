@@ -60,6 +60,25 @@ docs/                       # User documentation
 dist/                       # Build output (generated)
 ```
 
+## Version Upgrades (Important!)
+
+When a new Claude Code version is released, create a versioned variant to test it while preserving existing installations.
+
+**Quick upgrade:**
+```bash
+./scripts/create-versioned-variant.sh           # Auto-detect version
+./scripts/create-versioned-variant.sh 22        # Create claudesp22
+./scripts/update-preview-alias.sh claudesp22    # Update preview alias
+```
+
+**Manual steps:**
+1. Check latest: `npm view @anthropic-ai/claude-code version`
+2. Update `src/core/constants.ts` if needed
+3. Create variant: `npm run dev -- quick --provider mirror --name claudesp22 --root ~/.claude-sneakpeek-22 --no-tui`
+4. Update shell aliases
+
+See [docs/guides/version-upgrade.md](docs/guides/version-upgrade.md) for full documentation.
+
 ## Build, Test, and Development Commands
 
 ```bash

@@ -36,6 +36,25 @@ npx @realmikekelly/claude-sneakpeek update claudesp         # Update
 npx @realmikekelly/claude-sneakpeek remove claudesp         # Uninstall
 ```
 
+## Versioned Variants
+
+Run multiple Claude Code versions side-by-side with versioned variants:
+
+```bash
+# Create versioned variant (from source)
+./scripts/create-versioned-variant.sh 22    # Creates claudesp22
+
+# Update preview alias
+./scripts/update-preview-alias.sh claudesp22
+```
+
+This gives you:
+- `claudesp20` — stable, tested version
+- `claudesp22` — latest for testing
+- `preview` alias — points to latest
+
+See [docs/guides/version-upgrade.md](docs/guides/version-upgrade.md) for details.
+
 ## Where things live
 
 ```
