@@ -222,12 +222,8 @@ main() {
     fi
   done
 
-  # Build command (use bun if available, otherwise npm)
-  local runner="npm"
-  if command -v bun &>/dev/null; then
-    runner="bun"
-  fi
-  local cmd=($runner run dev -- quick --name "$variant_name" --root "$root_dir" --no-tui)
+  # Build command (bun assumed available on all machines)
+  local cmd=(bun x tsx src/cli/index.ts quick --name "$variant_name" --root "$root_dir" --no-tui)
   if [[ "$has_provider" == false ]]; then
     cmd+=(--provider "$provider")
   fi

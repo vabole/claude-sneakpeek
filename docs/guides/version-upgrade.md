@@ -17,15 +17,28 @@ The versioned variant approach allows running multiple Claude Code versions side
 ~/.claude-sneakpeek-23/claudesp23/
 ```
 
-## One-Command Upgrade
-
-The fastest way to upgrade:
+## Quick Upgrade (Two Commands)
 
 ```bash
-./scripts/upgrade.sh 23
+# 1. Create variant and update alias
+./scripts/upgrade.sh 24
+
+# 2. Link session history, skills, and plugins to ~/.claude
+./scripts/link-session-history.sh 24 --force
+
+# 3. Reload shell
+source ~/.zshrc
 ```
 
-This single command:
+## What Each Script Does
+
+### upgrade.sh
+
+```bash
+./scripts/upgrade.sh 24
+```
+
+This command:
 1. Updates `constants.ts` to the latest npm version
 2. Creates the variant (overwrites if exists)
 3. Updates the `preview` alias
@@ -35,10 +48,29 @@ This single command:
 Options:
 ```bash
 ./scripts/upgrade.sh              # Auto-detect latest version
-./scripts/upgrade.sh 23           # Specific version
+./scripts/upgrade.sh 24           # Specific version
 ./scripts/upgrade.sh --dry-run    # Preview what would happen
 ./scripts/upgrade.sh --no-commit  # Skip git commit/push
 ./scripts/upgrade.sh --no-chezmoi # Skip chezmoi sync
+```
+
+### link-session-history.sh
+
+```bash
+./scripts/link-session-history.sh 24 --force
+```
+
+This command symlinks variant config to `~/.claude` so the variant shares:
+- `projects/` - Session history (for `claude -r` / `preview -r`)
+- `session-env/` - Per-session environment data
+- `skills/` - Custom skills
+- `plugins/` - Installed plugins
+- `history.jsonl` - Command history
+
+Options:
+```bash
+./scripts/link-session-history.sh 24           # Create symlinks (skip existing)
+./scripts/link-session-history.sh 24 --force   # Backup and replace existing
 ```
 
 ## Individual Scripts
@@ -65,18 +97,36 @@ Options:
 
 ```bash
 # Basic usage
-./scripts/update-preview-alias.sh claudesp23
+./scripts/update-preview-alias.sh claudesp24
 
 # With chezmoi sync
-./scripts/update-preview-alias.sh claudesp23 --chezmoi
+./scripts/update-preview-alias.sh claudesp24 --chezmoi
 
 # Interactive mode
-./scripts/update-preview-alias.sh claudesp23 --interactive
+./scripts/update-preview-alias.sh claudesp24 --interactive
 ```
 
 Options:
 - `--chezmoi` - Sync to chezmoi without prompting
 - `--interactive` - Enable interactive prompts
+
+### Link Session History
+
+```bash
+# Basic usage
+./scripts/link-session-history.sh 24
+
+# Force replace existing (backs up first)
+./scripts/link-session-history.sh 24 --force
+```
+
+Options:
+- `--force`, `-f` - Backup and replace existing directories
+
+**Why symlink?** Without symlinks, the variant has its own isolated config. Symlinking to `~/.claude` means:
+- `preview -r` shows the same sessions as `claude -r`
+- Skills and plugins are shared
+- Command history is shared
 
 ## Manual Upgrade Steps
 
