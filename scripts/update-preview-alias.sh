@@ -47,36 +47,61 @@ show_help() {
 update-preview-alias.sh - Update the 'preview' alias to point to a new variant
 
 Usage:
-  ./scripts/update-preview-alias.sh <variant_name>
+  ./scripts/update-preview-alias.sh <variant_name> [OPTIONS]
 
 Arguments:
   variant_name    The variant to point preview alias to (e.g., claudesp22)
 
+Options:
+  --chezmoi         Sync to chezmoi without prompting
+  --interactive     Enable interactive prompts (disabled by default)
+  --help, -h        Show this help
+
 This script:
   1. Finds the shell config file containing the preview alias
   2. Updates it to point to the specified variant
-  3. Optionally syncs to chezmoi if detected
+  3. Syncs to chezmoi if --chezmoi flag is passed
 
 Examples:
-  ./scripts/update-preview-alias.sh claudesp22
+  ./scripts/update-preview-alias.sh claudesp23 --chezmoi
   ./scripts/update-preview-alias.sh claudesp20    # Rollback to older version
 HELP
 }
 
 main() {
-  # Handle help flag
-  for arg in "$@"; do
-    if [[ "$arg" == "--help" || "$arg" == "-h" ]]; then
-      show_help
-      exit 0
-    fi
+  local variant_name=""
+  local sync_chezmoi=false
+  local interactive=false
+
+  # Parse arguments
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --help|-h)
+        show_help
+        exit 0
+        ;;
+      --chezmoi)
+        sync_chezmoi=true
+        shift
+        ;;
+      --interactive)
+        interactive=true
+        shift
+        ;;
+      -*)
+        log_error "Unknown option: $1"
+        exit 1
+        ;;
+      *)
+        variant_name="$1"
+        shift
+        ;;
+    esac
   done
 
-  local variant_name="${1:-}"
-
   if [[ -z "$variant_name" ]]; then
-    log_error "Usage: $0 <variant_name>"
-    log_error "Example: $0 claudesp22"
+    log_error "Usage: $0 <variant_name> [--chezmoi]"
+    log_error "Example: $0 claudesp22 --chezmoi"
     log_error "Run with --help for more info"
     exit 1
   fi
@@ -136,26 +161,43 @@ main() {
 
   # Check for chezmoi
   if command -v chezmoi &>/dev/null; then
-    log_info "Chezmoi detected"
-    read -p "Sync to chezmoi and push? [Y/n] " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+    if [[ "$sync_chezmoi" == true ]]; then
+      log_info "Syncing to chezmoi"
       chezmoi add "$alias_file"
       log_success "Added to chezmoi"
 
       local chezmoi_dir
       chezmoi_dir="$(chezmoi source-path)"
       if [[ -d "$chezmoi_dir/.git" ]]; then
-        read -p "Commit and push? [Y/n] " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-          cd "$chezmoi_dir"
-          git add -A
-          git commit -m "Update preview alias to $variant_name" || true
-          git push
-          log_success "Pushed to remote"
+        cd "$chezmoi_dir"
+        git add -A
+        git commit -m "Update preview alias to $variant_name" || true
+        git push && log_success "Pushed to remote"
+      fi
+    elif [[ "$interactive" == true ]]; then
+      log_info "Chezmoi detected"
+      read -p "Sync to chezmoi and push? [Y/n] " -n 1 -r
+      echo
+      if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+        chezmoi add "$alias_file"
+        log_success "Added to chezmoi"
+
+        local chezmoi_dir
+        chezmoi_dir="$(chezmoi source-path)"
+        if [[ -d "$chezmoi_dir/.git" ]]; then
+          read -p "Commit and push? [Y/n] " -n 1 -r
+          echo
+          if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+            cd "$chezmoi_dir"
+            git add -A
+            git commit -m "Update preview alias to $variant_name" || true
+            git push
+            log_success "Pushed to remote"
+          fi
         fi
       fi
+    else
+      log_info "Chezmoi detected. Use --chezmoi to sync automatically."
     fi
   fi
 
